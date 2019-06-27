@@ -366,11 +366,11 @@ local cytanb = (function ()
 			refTable[data] = true
 			local serData = {}
 			for k, v in pairs(data) do
-				if type(k) == 'number' then
-					k = cytanb.ArrayNumberTag .. k
+				if type(k) == 'number' and type(v) == 'table' then
+					k = tostring(k) .. cytanb.ArrayNumberTag
 				end
 				if type(v) == 'number' and v < 0 then
-					serData[k .. cytanb.NegativeNumberTag] = tostring(v)
+					serData[k] = tostring(v) .. cytanb.NegativeNumberTag
 				else
 					serData[k] = cytanb.TableToSerializable(v, refTable)
 				end
@@ -387,19 +387,13 @@ local cytanb = (function ()
 
 			local data = {}
 			for k, v in pairs(serData) do
-				if type(v) == 'string' and string.endsWith(k, cytanb.NegativeNumberTag) then
-                    if k:startsWith(cytanb.ArrayNumberTag) then
-                        k = k:sub(1, #k - #cytanb.NegativeNumberTag)
-                        data[tonumber(k:sub(#cytanb.ArrayNumberTag + 1,#k))] = tonumber(v)
-                    else
-                        data[k:sub(1, #k - #cytanb.NegativeNumberTag)] = tonumber(v)
-                    end
-                else
-                    if k:startsWith(cytanb.ArrayNumberTag) then
-                        data[tonumber(k:sub(#cytanb.ArrayNumberTag + 1,#k))] = cytanb.TableFromSerializable(v)
-                    else
-                        data[k] = cytanb.TableFromSerializable(v)
-                    end
+				if type(k) == 'string' and k:endsWith(cytanb.ArrayNumberTag) then
+					k = tonumber(k:sub(1,#k - #cytanb.ArrayNumberTag))
+				end
+				if type(v) == 'string' and v:endsWith(cytanb.NegativeNumberTag) then
+					data[k] = tonumber(v:sub(1, #v - #cytanb.NegativeNumberTag))
+				else
+                    data[k] = cytanb.TableFromSerializable(v)
 				end
 			end
 			return data
